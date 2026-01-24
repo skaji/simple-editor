@@ -12,6 +12,8 @@ struct EditorView: NSViewRepresentable {
         scrollView.hasVerticalScroller = true
         scrollView.hasHorizontalScroller = !wrapLines
         scrollView.drawsBackground = false
+        scrollView.postsFrameChangedNotifications = true
+        scrollView.contentView.postsBoundsChangedNotifications = true
 
         let textView = EditorTextView()
         textView.isEditable = true
@@ -48,6 +50,8 @@ struct EditorView: NSViewRepresentable {
         scrollView.verticalRulerView = ruler
         scrollView.hasVerticalRuler = true
         scrollView.rulersVisible = true
+
+        context.coordinator.bind(scrollView: scrollView)
 
         return scrollView
     }
@@ -103,10 +107,42 @@ struct EditorView: NSViewRepresentable {
         private var text: Binding<String>
         private let onEditorChanged: (Bool) -> Void
         var didFocus = false
+        private var boundsObserver: NSObjectProtocol?
+        private var frameObserver: NSObjectProtocol?
 
         init(text: Binding<String>, onEditorChanged: @escaping (Bool) -> Void) {
             self.text = text
             self.onEditorChanged = onEditorChanged
+        }
+
+        deinit {
+            if let observer = boundsObserver {
+                NotificationCenter.default.removeObserver(observer)
+            }
+            if let observer = frameObserver {
+                NotificationCenter.default.removeObserver(observer)
+            }
+        }
+
+        func bind(scrollView: NSScrollView) {
+            if boundsObserver == nil {
+                boundsObserver = NotificationCenter.default.addObserver(
+                    forName: NSView.boundsDidChangeNotification,
+                    object: scrollView.contentView,
+                    queue: .main
+                ) { [weak scrollView] _ in
+                    scrollView?.verticalRulerView?.needsDisplay = true
+                }
+            }
+            if frameObserver == nil {
+                frameObserver = NotificationCenter.default.addObserver(
+                    forName: NSView.frameDidChangeNotification,
+                    object: scrollView,
+                    queue: .main
+                ) { [weak scrollView] _ in
+                    scrollView?.verticalRulerView?.needsDisplay = true
+                }
+            }
         }
 
         func textDidChange(_ notification: Notification) {
