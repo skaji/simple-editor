@@ -1,0 +1,68 @@
+# simple-editor
+
+This repository is a minimal macOS note editor with a native feel.
+
+## Goals
+- TextEdit-like, lightweight memo app
+- Auto-save, auto-generated filenames, left sidebar list
+- No rich features (tags, markdown, etc.)
+- Prefer macOS-native behavior and shortcuts
+
+## Core Features
+- Auto-save (after input settles)
+- File creation: `~/.simple-editor` with `YYYYMMDD-HHMMSS.txt`
+- Sidebar list (modified time + filename)
+- Monospaced editor with line numbers
+- Context menu: Save / Delete
+  - Delete is a soft delete (rename with `_` prefix)
+- Font size controls (Settings + Cmd +/-/0)
+- Wrap / No Wrap (horizontal scroll supported)
+- IME-safe auto-save (no saving during composition)
+
+## Key Rules
+- File storage: `~/.simple-editor`
+- Files starting with `.` or `_` are hidden from the list
+- Settings file: `~/.simple-editor/_config.json`
+  - `fontSize`, `wrapLines`
+
+## Tech Stack
+- SwiftUI + AppKit (NSTextView for editor + line numbers)
+- Swift Package Manager (SwiftPM)
+
+## Important Files
+- `Sources/SimpleEditor/App.swift`
+  - App UI, menus, settings, window title
+- `Sources/SimpleEditor/FileStore.swift`
+  - File management, auto-save, config
+- `Sources/SimpleEditor/EditorView.swift`
+  - NSTextView wrapper, IME handling, key overrides
+- `Sources/SimpleEditor/LineNumberRuler.swift`
+  - Line number rendering
+- `assets/AppIcon.png` / `assets/AppIcon.icns`
+  - App icon assets
+
+## Icon Workflow
+- PNG → `.icns` via `icnsutil`
+- `assets/SimpleEditor.iconset/` can be used for previews
+
+## Build & Run
+- Run: `swift run`
+- Build: `swift build -c release`
+- Create .app: `./build_app.sh`
+  - Output: `dist/SimpleEditor.app`
+
+## Distribution Notes
+- Unsigned apps will show Gatekeeper warnings
+- Proper distribution requires signing + notarization
+
+## Dev Notes
+- Respect `NSTextView.hasMarkedText()` to avoid IME issues
+- Trigger save only after composition ends
+- Ensure line-number redraw on content switches
+- JIS keyboard: Cmd+ may come from `;` + Shift
+
+## Typical Workflow
+1. `swift run` for quick checks
+2. Adjust UI / settings / icon
+3. `./build_app.sh` to build `.app`
+4. Copy to `/Applications` and test
