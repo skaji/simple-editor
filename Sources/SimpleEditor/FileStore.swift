@@ -22,8 +22,12 @@ final class FileStore: ObservableObject {
     @Published var selectedFileIDs: Set<String> = []
     @Published var currentFileID: String? = nil
     @Published var content: String = ""
+    @Published var searchQuery: String = ""
+    @Published var isSearchVisible: Bool = false
+    @Published var searchFocusToken: Int = 0
+    @Published var searchMatchedFileIDs: Set<String> = []
     @Published private(set) var fontSize: Int = 16
-    @Published private(set) var wrapLines: Bool = true
+    @Published private(set) var wrapLines: Bool = false
 
     private let baseURL: URL
     private let configURL: URL
@@ -68,6 +72,7 @@ final class FileStore: ObservableObject {
                 return FileEntry(id: name, name: name, mtime: mtime)
             }
             files = mapped.sorted { $0.name > $1.name }
+            updateSearchMatchesIfNeeded()
         } catch {
             files = []
         }
@@ -130,6 +135,33 @@ final class FileStore: ObservableObject {
         if !composing {
             scheduleSave()
         }
+    }
+
+    func updateSearchMatchesIfNeeded() {
+        guard !searchQuery.isEmpty else {
+            if !searchMatchedFileIDs.isEmpty {
+                searchMatchedFileIDs = []
+            }
+            return
+        }
+        var matches: Set<String> = []
+        for file in files {
+            let text: String
+            if file.id == currentFileID {
+                text = content
+            } else {
+                let url = baseURL.appendingPathComponent(file.id)
+                guard let data = try? Data(contentsOf: url),
+                      let loaded = String(data: data, encoding: .utf8) else {
+                    continue
+                }
+                text = loaded
+            }
+            if text.range(of: searchQuery, options: [.caseInsensitive, .diacriticInsensitive]) != nil {
+                matches.insert(file.id)
+            }
+        }
+        searchMatchedFileIDs = matches
     }
 
     private func scheduleSave() {
@@ -304,7 +336,7 @@ final class FileStore: ObservableObject {
             wrapLines = decoded.wrapLines
         } catch {
             fontSize = DefaultsValue.fontSize
-            wrapLines = true
+            wrapLines = false
             saveConfig()
         }
     }

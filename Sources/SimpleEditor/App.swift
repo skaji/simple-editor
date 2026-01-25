@@ -14,6 +14,18 @@ struct SimpleEditorApp: App {
                 }
         }
         .commands {
+            CommandGroup(after: .textEditing) {
+                Button("Find") {
+                    store.isSearchVisible = true
+                    store.searchFocusToken &+= 1
+                }
+                .keyboardShortcut("f", modifiers: [.command])
+
+                Button("Hide Find") {
+                    store.isSearchVisible = false
+                }
+                .keyboardShortcut("f", modifiers: [.command, .shift])
+            }
             CommandGroup(after: .textFormatting) {
                 Button("Bigger Text") {
                     store.bumpFontSize(2)
@@ -91,6 +103,12 @@ struct ContentView: View {
         .onChange(of: store.windowTitle) {
             updateWindowTitle()
         }
+        .onChange(of: store.searchQuery) {
+            store.updateSearchMatchesIfNeeded()
+        }
+        .onChange(of: store.isSearchVisible) {
+            store.updateSearchMatchesIfNeeded()
+        }
     }
 
     private func updateWindowTitle() {
@@ -117,6 +135,8 @@ struct SidebarView: View {
 
             List(selection: $store.selectedFileIDs) {
                 ForEach(store.files) { file in
+                    let isMatched = store.searchMatchedFileIDs.contains(file.id)
+                    let isSelected = store.selectedFileIDs.contains(file.id)
                     VStack(alignment: .leading, spacing: 4) {
                         Text(store.formatTimestamp(file.mtime))
                             .font(.system(size: 13, weight: .semibold))
@@ -141,7 +161,18 @@ struct SidebarView: View {
                         }
                     }
                     .listRowInsets(EdgeInsets(top: 6, leading: 12, bottom: 6, trailing: 12))
-                    .listRowBackground(Color.clear)
+                    .listRowBackground(
+                        Group {
+                            if isMatched && !isSelected {
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(Color(nsColor: .systemYellow).opacity(0.25))
+                                    .padding(.vertical, 2)
+                                    .padding(.horizontal, 8)
+                            } else {
+                                Color.clear
+                            }
+                        }
+                    )
                     .tag(file.id)
                 }
             }
@@ -158,6 +189,7 @@ struct SidebarView: View {
 
 struct EditorPane: View {
     @EnvironmentObject private var store: FileStore
+    @FocusState private var isSearchFieldFocused: Bool
 
     var body: some View {
         EditorView(text: $store.content, fontSize: store.fontSize, wrapLines: store.wrapLines, onEditorChanged: { composing in
@@ -165,12 +197,58 @@ struct EditorPane: View {
             if !composing {
                 store.compositionDidEndIfNeeded()
             }
-        })
+        }, searchQuery: $store.searchQuery)
             .onChange(of: store.selectedFileIDs) {
                 store.handleSelectionChange()
             }
             .padding(.horizontal, 22)
             .padding(.vertical, 8)
+            .overlay(alignment: .topTrailing) {
+                if store.isSearchVisible {
+                    HStack(spacing: 8) {
+                        Image(systemName: "magnifyingglass")
+                            .foregroundColor(.secondary)
+                        TextField("Find", text: $store.searchQuery)
+                            .textFieldStyle(.plain)
+                            .frame(width: 200)
+                            .focused($isSearchFieldFocused)
+                            .onExitCommand {
+                                store.isSearchVisible = false
+                            }
+                        Button {
+                            store.isSearchVisible = false
+                            store.searchQuery = ""
+                        } label: {
+                            Image(systemName: "xmark.circle.fill")
+                                .foregroundColor(.secondary)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    .padding(8)
+                    .background(
+                        RoundedRectangle(cornerRadius: 10)
+                            .fill(Color(nsColor: .windowBackgroundColor))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 10)
+                            .stroke(Color(nsColor: .separatorColor), lineWidth: 1)
+                    )
+                    .padding(.top, 8)
+                    .padding(.trailing, 10)
+                }
+            }
+            .onChange(of: store.isSearchVisible) { _, isVisible in
+                if isVisible {
+                    isSearchFieldFocused = true
+                } else {
+                    isSearchFieldFocused = false
+                }
+            }
+            .onChange(of: store.searchFocusToken) { _, _ in
+                if store.isSearchVisible {
+                    isSearchFieldFocused = true
+                }
+            }
     }
 }
 

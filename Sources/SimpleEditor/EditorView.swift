@@ -6,6 +6,7 @@ struct EditorView: NSViewRepresentable {
     let fontSize: Int
     let wrapLines: Bool
     let onEditorChanged: (Bool) -> Void
+    @Binding var searchQuery: String
 
     func makeNSView(context: Context) -> NSScrollView {
         let scrollView = NSScrollView()
@@ -20,7 +21,7 @@ struct EditorView: NSViewRepresentable {
         textView.isRichText = false
         textView.isSelectable = true
         textView.allowsUndo = true
-        textView.usesFindBar = true
+        textView.usesFindBar = false
         textView.isAutomaticTextReplacementEnabled = false
         textView.isAutomaticSpellingCorrectionEnabled = false
         textView.isAutomaticQuoteSubstitutionEnabled = false
@@ -72,6 +73,7 @@ struct EditorView: NSViewRepresentable {
             }
             nsView.verticalRulerView?.needsDisplay = true
         }
+        context.coordinator.updateSearchHighlights(in: textView, query: searchQuery)
         if textView.font?.pointSize != CGFloat(fontSize) {
             textView.font = .monospacedSystemFont(ofSize: CGFloat(fontSize), weight: .regular)
             nsView.verticalRulerView?.needsDisplay = true
@@ -109,6 +111,8 @@ struct EditorView: NSViewRepresentable {
         var didFocus = false
         private var boundsObserver: NSObjectProtocol?
         private var frameObserver: NSObjectProtocol?
+        private var lastSearchQuery = ""
+        private var lastSearchContentHash = 0
 
         init(text: Binding<String>, onEditorChanged: @escaping (Bool) -> Void) {
             self.text = text
@@ -150,6 +154,39 @@ struct EditorView: NSViewRepresentable {
             text.wrappedValue = textView.string
             textView.enclosingScrollView?.verticalRulerView?.needsDisplay = true
             onEditorChanged(textView.hasMarkedText())
+        }
+
+        func updateSearchHighlights(in textView: NSTextView, query: String) {
+            let content = textView.string
+            let contentHash = content.hashValue
+            if query == lastSearchQuery && contentHash == lastSearchContentHash {
+                return
+            }
+            lastSearchQuery = query
+            lastSearchContentHash = contentHash
+
+            guard let storage = textView.textStorage else { return }
+            let nsContent = content as NSString
+            let fullRange = NSRange(location: 0, length: nsContent.length)
+            storage.beginEditing()
+            storage.removeAttribute(.backgroundColor, range: fullRange)
+            if !query.isEmpty {
+                let options: NSString.CompareOptions = [.caseInsensitive]
+                var searchRange = fullRange
+                while searchRange.length > 0 {
+                    let found = nsContent.range(of: query, options: options, range: searchRange)
+                    if found.location == NSNotFound {
+                        break
+                    }
+                    storage.addAttribute(.backgroundColor, value: NSColor.systemYellow.withAlphaComponent(0.4), range: found)
+                    let nextLocation = found.location + max(found.length, 1)
+                    if nextLocation >= nsContent.length {
+                        break
+                    }
+                    searchRange = NSRange(location: nextLocation, length: nsContent.length - nextLocation)
+                }
+            }
+            storage.endEditing()
         }
     }
 }
