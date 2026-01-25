@@ -70,4 +70,5 @@ This repository is a minimal macOS note editor with a native feel.
 
 ## Development Notes
 - When making changes, run `make build` and confirm the build passes.
+- Follow `make format` formatting rules and run it when needed.
 - When a feature is completed, record it in this AGENTS.md.
