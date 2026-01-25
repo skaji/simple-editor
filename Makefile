@@ -9,3 +9,7 @@ format:
 
 release:
 	./build_app.sh
+
+install: release
+	rm -rf /Applications/SimpleEditor.app
+	mv dist/SimpleEditor.app /Applications/
