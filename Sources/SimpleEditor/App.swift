@@ -204,7 +204,7 @@ struct EditorPane: View {
       store.handleSelectionChange()
     }
     .padding(.leading, 28)
-    .padding(.trailing, 22)
+    .padding(.trailing, 0)
     .padding(.vertical, 8)
     .overlay(alignment: .topTrailing) {
       if store.isSearchVisible {
