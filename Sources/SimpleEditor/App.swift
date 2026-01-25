@@ -66,11 +66,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
 struct ContentView: View {
   @EnvironmentObject private var store: FileStore
-  @State private var isSidebarVisible = true
 
   var body: some View {
     HStack(spacing: 0) {
-      if isSidebarVisible {
+      if store.isSidebarVisible {
         SidebarView()
           .frame(width: 240)
       }
@@ -78,7 +77,7 @@ struct ContentView: View {
         .overlay(alignment: .topLeading) {
           Button {
             withAnimation(.easeInOut(duration: 0.2)) {
-              isSidebarVisible.toggle()
+              store.toggleSidebarVisible()
             }
           } label: {
             Image(systemName: "sidebar.leading")
