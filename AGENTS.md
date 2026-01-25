@@ -67,3 +67,7 @@ This repository is a minimal macOS note editor with a native feel.
 2. Adjust UI / settings / icon
 3. `./build_app.sh` to build `.app`
 4. Copy to `/Applications` and test
+
+## Development Notes
+- When making changes, run `make build` and confirm the build passes.
+- When a feature is completed, record it in this AGENTS.md.
