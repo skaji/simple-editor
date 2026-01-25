@@ -200,6 +200,7 @@ struct EditorPane: View {
         }
       }, searchQuery: $store.searchQuery
     )
+    .id(store.wrapLines)
     .onChange(of: store.selectedFileIDs) {
       store.handleSelectionChange()
     }
