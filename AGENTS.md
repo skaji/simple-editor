@@ -13,6 +13,7 @@ This repository is a minimal macOS note editor with a native feel.
 - File creation: `~/.simple-editor` with `YYYYMMDD-HHMMSS.txt`
 - Sidebar list (modified time + filename)
 - Monospaced editor with line numbers
+- Search (Cmd+F): in-file highlights + file list highlights
 - Context menu: Save / Delete
   - Delete is a soft delete (rename with `_` prefix)
 - Font size controls (Settings + Cmd +/-/0)
