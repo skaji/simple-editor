@@ -12,7 +12,8 @@ struct EditorView: NSViewRepresentable {
     let scrollView = NSScrollView()
     scrollView.hasVerticalScroller = true
     scrollView.hasHorizontalScroller = !wrapLines
-    scrollView.drawsBackground = false
+    scrollView.drawsBackground = true
+    scrollView.backgroundColor = .textBackgroundColor
     scrollView.postsFrameChangedNotifications = true
     scrollView.contentView.postsBoundsChangedNotifications = true
 
@@ -30,9 +31,10 @@ struct EditorView: NSViewRepresentable {
       textView.setValue(false, forKey: "automaticPeriodSubstitutionEnabled")
     }
     textView.textContainerInset = NSSize(width: 6, height: 6)
-    textView.font = .monospacedSystemFont(ofSize: CGFloat(fontSize), weight: .regular)
+    textView.font = preferredMonospacedFont(ofSize: CGFloat(fontSize))
     textView.delegate = context.coordinator
-    textView.backgroundColor = .clear
+    textView.drawsBackground = true
+    textView.backgroundColor = .textBackgroundColor
     textView.string = text
     textView.maxSize = NSSize(
       width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
@@ -63,7 +65,7 @@ struct EditorView: NSViewRepresentable {
     guard let textView = nsView.documentView as? NSTextView else { return }
     if textView.hasMarkedText() {
       if textView.font?.pointSize != CGFloat(fontSize) {
-        textView.font = .monospacedSystemFont(ofSize: CGFloat(fontSize), weight: .regular)
+        textView.font = preferredMonospacedFont(ofSize: CGFloat(fontSize))
         nsView.verticalRulerView?.needsDisplay = true
       }
       return
@@ -77,7 +79,7 @@ struct EditorView: NSViewRepresentable {
     }
     context.coordinator.updateSearchHighlights(in: textView, query: searchQuery)
     if textView.font?.pointSize != CGFloat(fontSize) {
-      textView.font = .monospacedSystemFont(ofSize: CGFloat(fontSize), weight: .regular)
+      textView.font = preferredMonospacedFont(ofSize: CGFloat(fontSize))
       nsView.verticalRulerView?.needsDisplay = true
     }
     if let container = textView.textContainer {

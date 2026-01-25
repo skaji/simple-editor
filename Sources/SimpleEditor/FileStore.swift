@@ -8,7 +8,7 @@ struct FileEntry: Identifiable, Hashable {
 
 final class FileStore: ObservableObject {
   private enum DefaultsValue {
-    static let fontSize = 16
+    static let fontSize = 18
     static let minFontSize = 10
     static let maxFontSize = 28
   }

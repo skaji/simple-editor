@@ -72,3 +72,6 @@ This repository is a minimal macOS note editor with a native feel.
 - When making changes, run `make build` and confirm the build passes.
 - Follow `make format` formatting rules and run it when needed.
 - When a feature is completed, record it in this AGENTS.md.
+
+## Completed Features
+- 2026-01-25: Prefer a CJK-capable monospaced font (e.g. Osaka-Mono) for equal-width glyphs.

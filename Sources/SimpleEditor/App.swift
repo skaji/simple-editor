@@ -95,7 +95,6 @@ struct ContentView: View {
           .padding(.trailing, 6)
         }
     }
-    .frame(minWidth: 900, minHeight: 600)
     .background(Color(nsColor: .windowBackgroundColor))
     .onAppear {
       updateWindowTitle()
@@ -204,7 +203,8 @@ struct EditorPane: View {
     .onChange(of: store.selectedFileIDs) {
       store.handleSelectionChange()
     }
-    .padding(.horizontal, 22)
+    .padding(.leading, 28)
+    .padding(.trailing, 22)
     .padding(.vertical, 8)
     .overlay(alignment: .topTrailing) {
       if store.isSearchVisible {
