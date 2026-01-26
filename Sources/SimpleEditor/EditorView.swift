@@ -31,7 +31,8 @@ struct EditorView: NSViewRepresentable {
       textView.setValue(false, forKey: "automaticPeriodSubstitutionEnabled")
     }
     textView.textContainerInset = NSSize(width: 6, height: 6)
-    applyMonospacedFont(to: textView)
+    let desiredFont = preferredMonospacedFont(ofSize: CGFloat(fontSize))
+    applyMonospacedFont(to: textView, desiredFont: desiredFont)
     textView.delegate = context.coordinator
     textView.drawsBackground = true
     textView.backgroundColor = .textBackgroundColor
@@ -63,8 +64,9 @@ struct EditorView: NSViewRepresentable {
 
   func updateNSView(_ nsView: NSScrollView, context: Context) {
     guard let textView = nsView.documentView as? NSTextView else { return }
+    let desiredFont = preferredMonospacedFont(ofSize: CGFloat(fontSize))
     if textView.hasMarkedText() {
-      if applyMonospacedFont(to: textView) {
+      if applyMonospacedFont(to: textView, desiredFont: desiredFont) {
         nsView.verticalRulerView?.needsDisplay = true
       }
       return
@@ -77,7 +79,7 @@ struct EditorView: NSViewRepresentable {
       nsView.verticalRulerView?.needsDisplay = true
     }
     context.coordinator.updateSearchHighlights(in: textView, query: searchQuery)
-    if applyMonospacedFont(to: textView) {
+    if applyMonospacedFont(to: textView, desiredFont: desiredFont) {
       nsView.verticalRulerView?.needsDisplay = true
     }
     if let container = textView.textContainer {
@@ -112,8 +114,7 @@ struct EditorView: NSViewRepresentable {
   }
 
   @discardableResult
-  private func applyMonospacedFont(to textView: NSTextView) -> Bool {
-    let desiredFont = preferredMonospacedFont(ofSize: CGFloat(fontSize))
+  private func applyMonospacedFont(to textView: NSTextView, desiredFont: NSFont) -> Bool {
     let currentFont = textView.font
     let isFontMismatch =
       currentFont?.fontName != desiredFont.fontName
@@ -221,6 +222,7 @@ struct EditorView: NSViewRepresentable {
       }
       storage.endEditing()
     }
+
   }
 }
 
