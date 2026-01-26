@@ -31,7 +31,7 @@ struct EditorView: NSViewRepresentable {
       textView.setValue(false, forKey: "automaticPeriodSubstitutionEnabled")
     }
     textView.textContainerInset = NSSize(width: 6, height: 6)
-    textView.font = preferredMonospacedFont(ofSize: CGFloat(fontSize))
+    applyMonospacedFont(to: textView)
     textView.delegate = context.coordinator
     textView.drawsBackground = true
     textView.backgroundColor = .textBackgroundColor
@@ -64,8 +64,7 @@ struct EditorView: NSViewRepresentable {
   func updateNSView(_ nsView: NSScrollView, context: Context) {
     guard let textView = nsView.documentView as? NSTextView else { return }
     if textView.hasMarkedText() {
-      if textView.font?.pointSize != CGFloat(fontSize) {
-        textView.font = preferredMonospacedFont(ofSize: CGFloat(fontSize))
+      if applyMonospacedFont(to: textView) {
         nsView.verticalRulerView?.needsDisplay = true
       }
       return
@@ -78,8 +77,7 @@ struct EditorView: NSViewRepresentable {
       nsView.verticalRulerView?.needsDisplay = true
     }
     context.coordinator.updateSearchHighlights(in: textView, query: searchQuery)
-    if textView.font?.pointSize != CGFloat(fontSize) {
-      textView.font = preferredMonospacedFont(ofSize: CGFloat(fontSize))
+    if applyMonospacedFont(to: textView) {
       nsView.verticalRulerView?.needsDisplay = true
     }
     if let container = textView.textContainer {
@@ -111,6 +109,32 @@ struct EditorView: NSViewRepresentable {
 
   func makeCoordinator() -> Coordinator {
     Coordinator(text: $text, onEditorChanged: onEditorChanged)
+  }
+
+  @discardableResult
+  private func applyMonospacedFont(to textView: NSTextView) -> Bool {
+    let desiredFont = preferredMonospacedFont(ofSize: CGFloat(fontSize))
+    let currentFont = textView.font
+    let isFontMismatch =
+      currentFont?.fontName != desiredFont.fontName
+      || currentFont?.pointSize != desiredFont.pointSize
+    var didUpdate = false
+    if isFontMismatch {
+      textView.font = desiredFont
+      didUpdate = true
+    }
+    if let typingFont = textView.typingAttributes[.font] as? NSFont {
+      if typingFont.fontName != desiredFont.fontName
+        || typingFont.pointSize != desiredFont.pointSize
+      {
+        textView.typingAttributes[.font] = desiredFont
+        didUpdate = true
+      }
+    } else {
+      textView.typingAttributes[.font] = desiredFont
+      didUpdate = true
+    }
+    return didUpdate
   }
 
   final class Coordinator: NSObject, NSTextViewDelegate {
