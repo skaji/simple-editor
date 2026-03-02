@@ -78,3 +78,6 @@ This repository is a minimal macOS note editor with a native feel.
 - 2026-01-25: Persist left sidebar toggle state in config and restore on launch.
 - 2026-03-03: On JIS keyboards, map `Shift+¥` to `|` while keeping `¥` key as `\` without Shift.
 - 2026-03-03: Swap sidebar row order to show bold filename first and modified timestamp below.
+- 2026-03-03: Replace sidebar "+ New" text with SF Symbol button (`square.and.pencil` + "New").
+- 2026-03-03: Update sidebar new-file button text to "New file" and show gray hover background only on mouse over.
+- 2026-03-03: Expand new-file button hover highlight to span the full available row width.

@@ -118,15 +118,31 @@ struct ContentView: View {
 
 struct SidebarView: View {
   @EnvironmentObject private var store: FileStore
+  @State private var isNewButtonHovered = false
 
   var body: some View {
     VStack(spacing: 0) {
       HStack {
-        Button("+ New") {
+        Button {
           store.createNewFile()
+        } label: {
+          Label("New file", systemImage: "square.and.pencil")
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(
+              RoundedRectangle(cornerRadius: 6)
+                .fill(
+                  isNewButtonHovered
+                    ? Color(nsColor: .quaternaryLabelColor).opacity(0.8) : Color.clear
+                )
+            )
         }
-        .buttonStyle(.bordered)
-        Spacer()
+        .buttonStyle(.plain)
+        .contentShape(Rectangle())
+        .onHover { hovering in
+          isNewButtonHovered = hovering
+        }
       }
       .padding(.horizontal, 12)
       .padding(.vertical, 10)
