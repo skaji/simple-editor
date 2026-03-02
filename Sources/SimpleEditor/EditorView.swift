@@ -230,12 +230,13 @@ final class EditorTextView: NSTextView {
   override func keyDown(with event: NSEvent) {
     if !hasMarkedText() {
       let characters = event.characters
+      let isShiftPressed = event.modifierFlags.contains(.shift)
       if event.keyCode == 0x30 {
         insertText("  ", replacementRange: selectedRange())
         return
       }
       if event.keyCode == 0x5D || characters == "¥" {
-        insertText("\\", replacementRange: selectedRange())
+        insertText(isShiftPressed ? "|" : "\\", replacementRange: selectedRange())
         return
       }
     }
