@@ -77,3 +77,4 @@ This repository is a minimal macOS note editor with a native feel.
 - 2026-01-25: Prefer a CJK-capable monospaced font (e.g. Osaka-Mono) for equal-width glyphs.
 - 2026-01-25: Persist left sidebar toggle state in config and restore on launch.
 - 2026-03-03: On JIS keyboards, map `Shift+¥` to `|` while keeping `¥` key as `\` without Shift.
+- 2026-03-03: Swap sidebar row order to show bold filename first and modified timestamp below.

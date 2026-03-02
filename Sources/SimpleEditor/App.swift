@@ -136,9 +136,9 @@ struct SidebarView: View {
           let isMatched = store.searchMatchedFileIDs.contains(file.id)
           let isSelected = store.selectedFileIDs.contains(file.id)
           VStack(alignment: .leading, spacing: 4) {
-            Text(store.formatTimestamp(file.mtime))
-              .font(.system(size: 13, weight: .semibold))
             Text(file.name)
+              .font(.system(size: 13, weight: .semibold))
+            Text(store.formatTimestamp(file.mtime))
               .font(.system(size: 11))
               .foregroundColor(.secondary)
           }
