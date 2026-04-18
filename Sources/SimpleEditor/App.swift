@@ -154,9 +154,11 @@ struct SidebarView: View {
           VStack(alignment: .leading, spacing: 4) {
             Text(file.name)
               .font(.system(size: 13, weight: .semibold))
-            Text(store.formatTimestamp(file.mtime))
-              .font(.system(size: 11))
-              .foregroundColor(.secondary)
+            TimelineView(.periodic(from: Date(), by: 60)) { context in
+              Text(store.formatRelativeTimestamp(file.mtime, now: context.date))
+                .font(.system(size: 11))
+                .foregroundColor(.secondary)
+            }
           }
           .contextMenu {
             Button("Save Selected Files") {

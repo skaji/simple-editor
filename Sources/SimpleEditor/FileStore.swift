@@ -52,12 +52,6 @@ final class FileStore: ObservableObject {
   private var isDirty = false
   private var lastLoadedContent = ""
   private var isComposing = false
-  private let formatter: DateFormatter = {
-    let formatter = DateFormatter()
-    formatter.locale = Locale(identifier: "en_US_POSIX")
-    formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
-    return formatter
-  }()
 
   init() {
     let home = FileManager.default.homeDirectoryForCurrentUser
@@ -99,8 +93,38 @@ final class FileStore: ObservableObject {
     }
   }
 
-  func formatTimestamp(_ date: Date) -> String {
-    return formatter.string(from: date)
+  func formatRelativeTimestamp(_ date: Date, now: Date = Date()) -> String {
+    let seconds = max(0, Int(now.timeIntervalSince(date)))
+    if seconds < 60 {
+      return "just now"
+    }
+
+    let minutes = seconds / 60
+    if minutes < 60 {
+      return "\(minutes) \(minutes == 1 ? "minute" : "minutes") ago"
+    }
+
+    let hours = minutes / 60
+    if hours < 24 {
+      return "\(hours) \(hours == 1 ? "hour" : "hours") ago"
+    }
+
+    if Calendar.current.isDateInYesterday(date) {
+      return "yesterday"
+    }
+
+    let days = hours / 24
+    if days < 30 {
+      return "\(days) \(days == 1 ? "day" : "days") ago"
+    }
+
+    let months = days / 30
+    if months < 12 {
+      return "\(months) \(months == 1 ? "month" : "months") ago"
+    }
+
+    let years = months / 12
+    return "\(years) \(years == 1 ? "year" : "years") ago"
   }
 
   func createNewFile() {
