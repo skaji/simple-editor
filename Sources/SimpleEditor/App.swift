@@ -148,7 +148,7 @@ struct SidebarView: View {
       .padding(.vertical, 10)
 
       List(selection: $store.selectedFileIDs) {
-        ForEach(store.files) { file in
+        ForEach(store.visibleFiles) { file in
           let isMatched = store.searchMatchedFileIDs.contains(file.id)
           let isSelected = store.selectedFileIDs.contains(file.id)
           VStack(alignment: .leading, spacing: 4) {
@@ -196,6 +196,20 @@ struct SidebarView: View {
       .scrollContentBackground(.hidden)
       .safeAreaInset(edge: .top) {
         Color.clear.frame(height: 2)
+      }
+
+      if store.shouldShowFileVisibilityToggle {
+        Button {
+          store.toggleShowAllFiles()
+        } label: {
+          Text(store.showAllFiles ? "Show less" : "Show more")
+            .font(.system(size: 12))
+            .foregroundColor(.secondary)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 20)
+            .padding(.vertical, 8)
+        }
+        .buttonStyle(.plain)
       }
     }
     .frame(width: 240)

@@ -41,6 +41,7 @@ final class FileStore: ObservableObject {
   @Published var isSearchVisible: Bool = false
   @Published var searchFocusToken: Int = 0
   @Published var searchMatchedFileIDs: Set<String> = []
+  @Published var showAllFiles: Bool = false
   @Published private(set) var fontSize: Int = 16
   @Published private(set) var wrapLines: Bool = false
   @Published private(set) var isSidebarVisible: Bool = true
@@ -62,7 +63,7 @@ final class FileStore: ObservableObject {
 
   func loadFilesIfNeeded() {
     refreshFiles()
-    if currentFileID == nil, let first = files.first {
+    if currentFileID == nil, let first = preferredVisibleFile() {
       currentFileID = first.id
       selectedFileIDs = [first.id]
       loadSelectedFile()
@@ -91,6 +92,27 @@ final class FileStore: ObservableObject {
     } catch {
       files = []
     }
+  }
+
+  var visibleFiles: [FileEntry] {
+    guard !showAllFiles else { return files }
+    return files.filter { file in
+      isRecentlyModified(file) || selectedFileIDs.contains(file.id) || currentFileID == file.id
+    }
+  }
+
+  var olderHiddenFileCount: Int {
+    files.filter { file in
+      !isRecentlyModified(file) && !selectedFileIDs.contains(file.id) && currentFileID != file.id
+    }.count
+  }
+
+  var shouldShowFileVisibilityToggle: Bool {
+    showAllFiles || olderHiddenFileCount > 0
+  }
+
+  func toggleShowAllFiles() {
+    showAllFiles.toggle()
   }
 
   func formatRelativeTimestamp(_ date: Date, now: Date = Date()) -> String {
@@ -125,6 +147,20 @@ final class FileStore: ObservableObject {
 
     let years = months / 12
     return "\(years) \(years == 1 ? "year" : "years") ago"
+  }
+
+  private func isRecentlyModified(_ file: FileEntry) -> Bool {
+    guard let cutoff = Calendar.current.date(byAdding: .month, value: -2, to: Date()) else {
+      return true
+    }
+    return file.mtime >= cutoff
+  }
+
+  private func preferredVisibleFile() -> FileEntry? {
+    if showAllFiles {
+      return files.first
+    }
+    return files.first(where: { isRecentlyModified($0) }) ?? files.first
   }
 
   func createNewFile() {
@@ -260,7 +296,7 @@ final class FileStore: ObservableObject {
     }
     refreshFiles()
     if currentFileID == file.id {
-      currentFileID = files.first?.id
+      currentFileID = preferredVisibleFile()?.id
       if let current = currentFileID {
         selectedFileIDs = [current]
       } else {
@@ -325,7 +361,7 @@ final class FileStore: ObservableObject {
       }
     }
     refreshFiles()
-    if let first = files.first {
+    if let first = preferredVisibleFile() {
       currentFileID = first.id
       selectedFileIDs = [first.id]
       loadSelectedFile()

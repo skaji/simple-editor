@@ -82,3 +82,4 @@ This repository is a minimal macOS note editor with a native feel.
 - 2026-03-03: Update sidebar new-file button text to "New file" and show gray hover background only on mouse over.
 - 2026-03-03: Expand new-file button hover highlight to span the full available row width.
 - 2026-04-18: Show sidebar modified dates as relative labels like `10 minutes ago`, `yesterday`, and `1 month ago`.
+- 2026-04-18: Default sidebar file list to files modified within 2 months, with Show more / Show less for older files.
