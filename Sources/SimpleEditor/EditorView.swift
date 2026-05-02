@@ -37,11 +37,13 @@ struct EditorView: NSViewRepresentable {
     textView.drawsBackground = true
     textView.backgroundColor = .textBackgroundColor
     textView.string = text
+    applyParagraphStyle(to: textView)
     textView.maxSize = NSSize(
       width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
 
     let textContainer = textView.textContainer
     textContainer?.widthTracksTextView = wrapLines
+    textContainer?.lineBreakMode = wrapLines ? .byWordWrapping : .byClipping
     if !wrapLines {
       textContainer?.containerSize = NSSize(
         width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
@@ -73,6 +75,7 @@ struct EditorView: NSViewRepresentable {
     }
     if textView.string != text {
       textView.string = text
+      applyParagraphStyle(to: textView)
       if let container = textView.textContainer {
         textView.layoutManager?.ensureLayout(for: container)
       }
@@ -86,6 +89,7 @@ struct EditorView: NSViewRepresentable {
       if container.widthTracksTextView != wrapLines {
         container.widthTracksTextView = wrapLines
       }
+      container.lineBreakMode = wrapLines ? .byWordWrapping : .byClipping
       if !wrapLines {
         container.containerSize = NSSize(
           width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
@@ -111,6 +115,22 @@ struct EditorView: NSViewRepresentable {
 
   func makeCoordinator() -> Coordinator {
     Coordinator(text: $text, onEditorChanged: onEditorChanged)
+  }
+
+  private func applyParagraphStyle(to textView: NSTextView) {
+    let paragraphStyle = NSMutableParagraphStyle()
+    paragraphStyle.lineBreakMode = wrapLines ? .byWordWrapping : .byClipping
+    paragraphStyle.defaultTabInterval = 48
+
+    textView.defaultParagraphStyle = paragraphStyle
+    textView.typingAttributes[.paragraphStyle] = paragraphStyle
+
+    guard let storage = textView.textStorage else { return }
+    let range = NSRange(location: 0, length: storage.length)
+    guard range.length > 0 else { return }
+    storage.beginEditing()
+    storage.addAttribute(.paragraphStyle, value: paragraphStyle, range: range)
+    storage.endEditing()
   }
 
   @discardableResult
