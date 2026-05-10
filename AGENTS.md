@@ -88,3 +88,4 @@ This repository is a minimal macOS note editor with a native feel.
 - 2026-05-10: Tighten the top content spacing and animate sidebar open/close from the title-bar toggle.
 - 2026-05-10: Reduce line-number prominence while keeping baseline alignment with the editor text.
 - 2026-05-10: Add slight editor line spacing for more comfortable reading.
+- 2026-05-10: Replace the SE app icon with the New file square-and-pencil symbol.
