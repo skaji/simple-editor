@@ -2,6 +2,8 @@
 
 a simple editor for macOS
 
+![](screenshot.png)
+
 # Install
 
 ```
