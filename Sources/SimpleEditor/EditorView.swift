@@ -14,6 +14,7 @@ struct EditorView: NSViewRepresentable {
     scrollView.hasHorizontalScroller = !wrapLines
     scrollView.drawsBackground = true
     scrollView.backgroundColor = .textBackgroundColor
+    scrollView.borderType = .noBorder
     scrollView.postsFrameChangedNotifications = true
     scrollView.contentView.postsBoundsChangedNotifications = true
 
@@ -30,7 +31,7 @@ struct EditorView: NSViewRepresentable {
     if textView.responds(to: NSSelectorFromString("setAutomaticPeriodSubstitutionEnabled:")) {
       textView.setValue(false, forKey: "automaticPeriodSubstitutionEnabled")
     }
-    textView.textContainerInset = NSSize(width: 6, height: 6)
+    textView.textContainerInset = NSSize(width: 6, height: 2)
     let desiredFont = preferredMonospacedFont(ofSize: CGFloat(fontSize))
     applyMonospacedFont(to: textView, desiredFont: desiredFont)
     textView.delegate = context.coordinator

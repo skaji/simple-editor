@@ -84,3 +84,6 @@ This repository is a minimal macOS note editor with a native feel.
 - 2026-04-18: Show sidebar modified dates as relative labels like `10 minutes ago`, `yesterday`, and `1 month ago`.
 - 2026-04-18: Default sidebar file list to files modified within 2 months, with Show more / Show less for older files.
 - 2026-05-02: Prevent tab characters from triggering visual wrapping when Wrap lines is off.
+- 2026-05-10: Hide the filename/line-count title text and move the sidebar toggle into the macOS title bar.
+- 2026-05-10: Tighten the top content spacing and animate sidebar open/close from the title-bar toggle.
+- 2026-05-10: Reduce line-number prominence while keeping baseline alignment with the editor text.

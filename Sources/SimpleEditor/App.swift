@@ -72,34 +72,18 @@ struct ContentView: View {
       if store.isSidebarVisible {
         SidebarView()
           .frame(width: 240)
+          .transition(.move(edge: .leading).combined(with: .opacity))
       }
       EditorPane()
-        .overlay(alignment: .topLeading) {
-          Button {
-            withAnimation(.easeInOut(duration: 0.2)) {
-              store.toggleSidebarVisible()
-            }
-          } label: {
-            Image(systemName: "sidebar.leading")
-              .font(.system(size: 14, weight: .medium))
-              .padding(6)
-          }
-          .buttonStyle(.plain)
-          .background(
-            RoundedRectangle(cornerRadius: 8)
-              .fill(Color(nsColor: .windowBackgroundColor))
-          )
-          .padding(.leading, 8)
-          .padding(.top, 8)
-          .padding(.trailing, 6)
-        }
     }
+    .animation(.easeInOut(duration: 0.32), value: store.isSidebarVisible)
     .background(Color(nsColor: .windowBackgroundColor))
+    .background(WindowChromeConfigurator(store: store))
     .onAppear {
-      updateWindowTitle()
+      configureWindowChrome()
     }
     .onChange(of: store.windowTitle) {
-      updateWindowTitle()
+      configureWindowChrome()
     }
     .onChange(of: store.searchQuery) {
       store.updateSearchMatchesIfNeeded()
@@ -109,10 +93,87 @@ struct ContentView: View {
     }
   }
 
-  private func updateWindowTitle() {
+  private func configureWindowChrome() {
     let window = NSApp.keyWindow ?? NSApp.windows.first
     guard let target = window else { return }
     target.title = store.windowTitle
+    target.titleVisibility = .hidden
+  }
+}
+
+struct WindowChromeConfigurator: NSViewRepresentable {
+  @ObservedObject var store: FileStore
+
+  func makeNSView(context: Context) -> NSView {
+    let view = NSView(frame: .zero)
+    DispatchQueue.main.async {
+      configureWindow(for: view)
+    }
+    return view
+  }
+
+  func updateNSView(_ nsView: NSView, context: Context) {
+    DispatchQueue.main.async {
+      configureWindow(for: nsView)
+    }
+  }
+
+  private func configureWindow(for view: NSView) {
+    guard let window = view.window else { return }
+    window.title = store.windowTitle
+    window.titleVisibility = .hidden
+
+    if let controller = window.titlebarAccessoryViewControllers
+      .compactMap({ $0 as? SidebarTitlebarAccessoryController })
+      .first
+    {
+      controller.store = store
+      return
+    }
+
+    let controller = SidebarTitlebarAccessoryController(store: store)
+    window.addTitlebarAccessoryViewController(controller)
+  }
+}
+
+final class SidebarTitlebarAccessoryController: NSTitlebarAccessoryViewController {
+  var store: FileStore?
+
+  init(store: FileStore) {
+    self.store = store
+    super.init(nibName: nil, bundle: nil)
+    layoutAttribute = .left
+    view = SidebarTitlebarButton(store: store)
+  }
+
+  required init?(coder: NSCoder) {
+    nil
+  }
+}
+
+final class SidebarTitlebarButton: NSButton {
+  private var store: FileStore?
+
+  init(store: FileStore) {
+    self.store = store
+    super.init(frame: NSRect(x: 0, y: 0, width: 32, height: 28))
+    image = NSImage(systemSymbolName: "sidebar.leading", accessibilityDescription: "Toggle sidebar")
+    imagePosition = .imageOnly
+    bezelStyle = .rounded
+    isBordered = false
+    target = self
+    action = #selector(toggleSidebar)
+    toolTip = "Toggle sidebar"
+  }
+
+  required init?(coder: NSCoder) {
+    nil
+  }
+
+  @objc private func toggleSidebar() {
+    withAnimation(.easeInOut(duration: 0.32)) {
+      store?.toggleSidebarVisible()
+    }
   }
 }
 
@@ -145,7 +206,8 @@ struct SidebarView: View {
         }
       }
       .padding(.horizontal, 12)
-      .padding(.vertical, 10)
+      .padding(.top, 6)
+      .padding(.bottom, 8)
 
       List(selection: $store.selectedFileIDs) {
         ForEach(store.visibleFiles) { file in
@@ -195,7 +257,7 @@ struct SidebarView: View {
       .listStyle(.sidebar)
       .scrollContentBackground(.hidden)
       .safeAreaInset(edge: .top) {
-        Color.clear.frame(height: 2)
+        Color.clear.frame(height: 0)
       }
 
       if store.shouldShowFileVisibilityToggle {
@@ -235,9 +297,9 @@ struct EditorPane: View {
     .onChange(of: store.selectedFileIDs) {
       store.handleSelectionChange()
     }
-    .padding(.leading, 28)
     .padding(.trailing, 0)
-    .padding(.vertical, 8)
+    .padding(.top, 2)
+    .padding(.bottom, 8)
     .overlay(alignment: .topTrailing) {
       if store.isSearchVisible {
         HStack(spacing: 8) {

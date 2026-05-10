@@ -35,7 +35,7 @@ final class LineNumberRuler: NSRulerView {
     paragraphStyle.alignment = .right
     let attributes: [NSAttributedString.Key: Any] = [
       .font: preferredMonospacedFont(ofSize: textView.font?.pointSize ?? 12),
-      .foregroundColor: NSColor.secondaryLabelColor.withAlphaComponent(0.25),
+      .foregroundColor: NSColor.secondaryLabelColor.withAlphaComponent(0.18),
       .paragraphStyle: paragraphStyle,
     ]
 
