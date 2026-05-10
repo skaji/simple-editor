@@ -121,6 +121,7 @@ struct EditorView: NSViewRepresentable {
   private func applyParagraphStyle(to textView: NSTextView) {
     let paragraphStyle = NSMutableParagraphStyle()
     paragraphStyle.lineBreakMode = wrapLines ? .byWordWrapping : .byClipping
+    paragraphStyle.lineSpacing = 2
     paragraphStyle.defaultTabInterval = 48
 
     textView.defaultParagraphStyle = paragraphStyle
