@@ -297,47 +297,6 @@ struct EditorContainer: View {
       EditorPane()
     }
     .background(Color(nsColor: .textBackgroundColor))
-    .overlay(alignment: .leading) {
-      EditorPaneSeparator()
-        .frame(
-          width: EditorLayout.lineNumberRulerWidth + EditorLayout.paneSeparatorCornerRadius,
-          height: nil
-        )
-        .allowsHitTesting(false)
-    }
-  }
-}
-
-struct EditorPaneSeparator: View {
-  var body: some View {
-    GeometryReader { proxy in
-      ZStack(alignment: .topLeading) {
-        Color(nsColor: .textBackgroundColor)
-          .frame(width: 3, height: proxy.size.height)
-          .offset(x: EditorLayout.lineNumberRulerWidth - 1)
-        RoundedPaneSeparator()
-          .stroke(Color(nsColor: .separatorColor), lineWidth: 1)
-      }
-    }
-  }
-}
-
-struct RoundedPaneSeparator: Shape {
-  func path(in rect: CGRect) -> Path {
-    let x = EditorLayout.lineNumberRulerWidth - 0.5
-    let radius = EditorLayout.paneSeparatorCornerRadius
-    var path = Path()
-    path.move(to: CGPoint(x: x + radius, y: rect.minY))
-    path.addQuadCurve(
-      to: CGPoint(x: x, y: rect.minY + radius),
-      control: CGPoint(x: x, y: rect.minY)
-    )
-    path.addLine(to: CGPoint(x: x, y: rect.maxY - radius))
-    path.addQuadCurve(
-      to: CGPoint(x: x + radius, y: rect.maxY),
-      control: CGPoint(x: x, y: rect.maxY)
-    )
-    return path
   }
 }
 
