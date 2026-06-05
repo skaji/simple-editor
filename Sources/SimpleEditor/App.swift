@@ -69,15 +69,12 @@ struct ContentView: View {
 
   var body: some View {
     HStack(spacing: 0) {
-      if store.isSidebarVisible {
-        SidebarView()
-          .frame(width: 240)
-          .transition(.move(edge: .leading).combined(with: .opacity))
-      }
-      EditorPane()
+      SidebarView()
+        .frame(width: 240)
+      EditorContainer()
     }
-    .animation(.easeInOut(duration: 0.32), value: store.isSidebarVisible)
     .background(Color(nsColor: .windowBackgroundColor))
+    .ignoresSafeArea(.container, edges: .top)
     .background(WindowChromeConfigurator(store: store))
     .onAppear {
       configureWindowChrome()
@@ -96,85 +93,103 @@ struct ContentView: View {
   private func configureWindowChrome() {
     let window = NSApp.keyWindow ?? NSApp.windows.first
     guard let target = window else { return }
-    target.title = store.windowTitle
-    target.titleVisibility = .hidden
+    applyWindowChrome(to: target, title: store.windowTitle)
   }
 }
 
 struct WindowChromeConfigurator: NSViewRepresentable {
   @ObservedObject var store: FileStore
 
+  func makeCoordinator() -> Coordinator {
+    Coordinator()
+  }
+
   func makeNSView(context: Context) -> NSView {
     let view = NSView(frame: .zero)
     DispatchQueue.main.async {
-      configureWindow(for: view)
+      configureWindow(for: view, coordinator: context.coordinator)
     }
     return view
   }
 
   func updateNSView(_ nsView: NSView, context: Context) {
     DispatchQueue.main.async {
-      configureWindow(for: nsView)
+      configureWindow(for: nsView, coordinator: context.coordinator)
     }
   }
 
-  private func configureWindow(for view: NSView) {
+  private func configureWindow(for view: NSView, coordinator: Coordinator) {
     guard let window = view.window else { return }
-    window.title = store.windowTitle
-    window.titleVisibility = .hidden
+    coordinator.configure(window: window, title: store.windowTitle)
+  }
 
-    if let controller = window.titlebarAccessoryViewControllers
-      .compactMap({ $0 as? SidebarTitlebarAccessoryController })
-      .first
-    {
-      controller.store = store
-      return
+  final class Coordinator {
+    private weak var window: NSWindow?
+    private var title = ""
+    private var observerTokens: [NSObjectProtocol] = []
+
+    deinit {
+      observerTokens.forEach(NotificationCenter.default.removeObserver)
     }
 
-    let controller = SidebarTitlebarAccessoryController(store: store)
-    window.addTitlebarAccessoryViewController(controller)
+    func configure(window: NSWindow, title: String) {
+      self.title = title
+      if self.window !== window {
+        observerTokens.forEach(NotificationCenter.default.removeObserver)
+        observerTokens.removeAll()
+        self.window = window
+        observeChromeResetNotifications(for: window)
+      }
+      applyChrome()
+    }
+
+    private func observeChromeResetNotifications(for window: NSWindow) {
+      let center = NotificationCenter.default
+      let windowNotifications: [Notification.Name] = [
+        NSWindow.didBecomeKeyNotification,
+        NSWindow.didResignKeyNotification,
+        NSWindow.didBecomeMainNotification,
+        NSWindow.didResignMainNotification,
+      ]
+      observerTokens = windowNotifications.map { name in
+        center.addObserver(forName: name, object: window, queue: .main) { [weak self] _ in
+          self?.scheduleChromeApply()
+        }
+      }
+      observerTokens.append(
+        center.addObserver(forName: NSApplication.didBecomeActiveNotification, object: nil, queue: .main) {
+          [weak self] _ in
+          self?.scheduleChromeApply()
+        }
+      )
+      observerTokens.append(
+        center.addObserver(forName: NSApplication.didResignActiveNotification, object: nil, queue: .main) {
+          [weak self] _ in
+          self?.scheduleChromeApply()
+        }
+      )
+    }
+
+    private func scheduleChromeApply() {
+      DispatchQueue.main.async { [weak self] in
+        self?.applyChrome()
+      }
+    }
+
+    private func applyChrome() {
+      guard let window else { return }
+      applyWindowChrome(to: window, title: title)
+    }
   }
 }
 
-final class SidebarTitlebarAccessoryController: NSTitlebarAccessoryViewController {
-  var store: FileStore?
-
-  init(store: FileStore) {
-    self.store = store
-    super.init(nibName: nil, bundle: nil)
-    layoutAttribute = .left
-    view = SidebarTitlebarButton(store: store)
-  }
-
-  required init?(coder: NSCoder) {
-    nil
-  }
-}
-
-final class SidebarTitlebarButton: NSButton {
-  private var store: FileStore?
-
-  init(store: FileStore) {
-    self.store = store
-    super.init(frame: NSRect(x: 0, y: 0, width: 32, height: 28))
-    image = NSImage(systemSymbolName: "sidebar.leading", accessibilityDescription: "Toggle sidebar")
-    imagePosition = .imageOnly
-    bezelStyle = .rounded
-    isBordered = false
-    target = self
-    action = #selector(toggleSidebar)
-    toolTip = "Toggle sidebar"
-  }
-
-  required init?(coder: NSCoder) {
-    nil
-  }
-
-  @objc private func toggleSidebar() {
-    withAnimation(.easeInOut(duration: 0.32)) {
-      store?.toggleSidebarVisible()
-    }
-  }
+private func applyWindowChrome(to window: NSWindow, title: String) {
+  window.title = title
+  window.titleVisibility = .hidden
+  window.titlebarAppearsTransparent = true
+  window.titlebarSeparatorStyle = .none
+  window.styleMask.insert(.fullSizeContentView)
+  window.isMovableByWindowBackground = true
 }
 
 struct SidebarView: View {
@@ -183,6 +198,8 @@ struct SidebarView: View {
 
   var body: some View {
     VStack(spacing: 0) {
+      SidebarHeader()
+
       HStack {
         Button {
           store.createNewFile()
@@ -276,6 +293,84 @@ struct SidebarView: View {
     }
     .frame(width: 240)
     .background(Color(nsColor: .windowBackgroundColor))
+  }
+}
+
+private let titlebarContentHeight: CGFloat = 48
+private let lineNumberRulerWidth: CGFloat = 46
+private let paneSeparatorCornerRadius: CGFloat = 14
+
+struct SidebarHeader: View {
+  var body: some View {
+    Color.clear.frame(height: titlebarContentHeight)
+  }
+}
+
+struct EditorContainer: View {
+  var body: some View {
+    VStack(spacing: 0) {
+      EditorTitlebar()
+      EditorPane()
+    }
+    .background(Color(nsColor: .textBackgroundColor))
+    .overlay(alignment: .leading) {
+      EditorPaneSeparator()
+        .frame(width: lineNumberRulerWidth + paneSeparatorCornerRadius, height: nil)
+        .allowsHitTesting(false)
+    }
+  }
+}
+
+struct EditorPaneSeparator: View {
+  var body: some View {
+    GeometryReader { proxy in
+      ZStack(alignment: .topLeading) {
+        Color(nsColor: .textBackgroundColor)
+          .frame(width: 3, height: proxy.size.height)
+          .offset(x: lineNumberRulerWidth - 1)
+        RoundedPaneSeparator()
+          .stroke(Color(nsColor: .separatorColor), lineWidth: 1)
+      }
+    }
+  }
+}
+
+struct RoundedPaneSeparator: Shape {
+  func path(in rect: CGRect) -> Path {
+    let x = lineNumberRulerWidth - 0.5
+    let radius = paneSeparatorCornerRadius
+    var path = Path()
+    path.move(to: CGPoint(x: x + radius, y: rect.minY))
+    path.addQuadCurve(
+      to: CGPoint(x: x, y: rect.minY + radius),
+      control: CGPoint(x: x, y: rect.minY)
+    )
+    path.addLine(to: CGPoint(x: x, y: rect.maxY - radius))
+    path.addQuadCurve(
+      to: CGPoint(x: x + radius, y: rect.maxY),
+      control: CGPoint(x: x, y: rect.maxY)
+    )
+    return path
+  }
+}
+
+struct EditorTitlebar: View {
+  @EnvironmentObject private var store: FileStore
+
+  var body: some View {
+    HStack(spacing: 8) {
+      Text(store.currentFileID ?? "SimpleEditor")
+        .font(.system(size: 14, weight: .semibold))
+        .foregroundColor(Color(nsColor: NSColor.secondaryLabelColor.withAlphaComponent(0.28)))
+        .lineLimit(1)
+        .truncationMode(.middle)
+      Spacer()
+    }
+    .padding(.leading, lineNumberRulerWidth + 16)
+    .padding(.trailing, 16)
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .frame(height: titlebarContentHeight)
+    .background(Color(nsColor: .textBackgroundColor))
   }
 }
 

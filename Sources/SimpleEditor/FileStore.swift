@@ -16,20 +16,16 @@ final class FileStore: ObservableObject {
   private struct AppConfig: Codable {
     var fontSize: Int
     var wrapLines: Bool
-    var isSidebarVisible: Bool
 
-    init(fontSize: Int, wrapLines: Bool, isSidebarVisible: Bool) {
+    init(fontSize: Int, wrapLines: Bool) {
       self.fontSize = fontSize
       self.wrapLines = wrapLines
-      self.isSidebarVisible = isSidebarVisible
     }
 
     init(from decoder: Decoder) throws {
       let container = try decoder.container(keyedBy: CodingKeys.self)
       fontSize = (try? container.decode(Int.self, forKey: .fontSize)) ?? DefaultsValue.fontSize
       wrapLines = (try? container.decode(Bool.self, forKey: .wrapLines)) ?? false
-      isSidebarVisible =
-        (try? container.decode(Bool.self, forKey: .isSidebarVisible)) ?? true
     }
   }
 
@@ -44,7 +40,6 @@ final class FileStore: ObservableObject {
   @Published var showAllFiles: Bool = false
   @Published private(set) var fontSize: Int = 16
   @Published private(set) var wrapLines: Bool = false
-  @Published private(set) var isSidebarVisible: Bool = true
 
   private let baseURL: URL
   private let configURL: URL
@@ -391,16 +386,6 @@ final class FileStore: ObservableObject {
     saveConfig()
   }
 
-  func setSidebarVisible(_ value: Bool) {
-    guard isSidebarVisible != value else { return }
-    isSidebarVisible = value
-    saveConfig()
-  }
-
-  func toggleSidebarVisible() {
-    setSidebarVisible(!isSidebarVisible)
-  }
-
   var lineCount: Int {
     if content.isEmpty {
       return 1
@@ -426,18 +411,15 @@ final class FileStore: ObservableObject {
       let decoded = try JSONDecoder().decode(AppConfig.self, from: data)
       fontSize = min(DefaultsValue.maxFontSize, max(DefaultsValue.minFontSize, decoded.fontSize))
       wrapLines = decoded.wrapLines
-      isSidebarVisible = decoded.isSidebarVisible
     } catch {
       fontSize = DefaultsValue.fontSize
       wrapLines = false
-      isSidebarVisible = true
       saveConfig()
     }
   }
 
   private func saveConfig() {
-    let config = AppConfig(
-      fontSize: fontSize, wrapLines: wrapLines, isSidebarVisible: isSidebarVisible)
+    let config = AppConfig(fontSize: fontSize, wrapLines: wrapLines)
     do {
       try FileManager.default.createDirectory(at: baseURL, withIntermediateDirectories: true)
       let encoder = JSONEncoder()
