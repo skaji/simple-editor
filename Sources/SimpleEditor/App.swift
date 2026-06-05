@@ -76,24 +76,12 @@ struct ContentView: View {
     .background(Color(nsColor: .windowBackgroundColor))
     .ignoresSafeArea(.container, edges: .top)
     .background(WindowChromeConfigurator(store: store))
-    .onAppear {
-      configureWindowChrome()
-    }
-    .onChange(of: store.windowTitle) {
-      configureWindowChrome()
-    }
     .onChange(of: store.searchQuery) {
       store.updateSearchMatchesIfNeeded()
     }
     .onChange(of: store.isSearchVisible) {
       store.updateSearchMatchesIfNeeded()
     }
-  }
-
-  private func configureWindowChrome() {
-    let window = NSApp.keyWindow ?? NSApp.windows.first
-    guard let target = window else { return }
-    applyWindowChrome(to: target, title: store.windowTitle)
   }
 }
 
@@ -296,13 +284,9 @@ struct SidebarView: View {
   }
 }
 
-private let titlebarContentHeight: CGFloat = 48
-private let lineNumberRulerWidth: CGFloat = 46
-private let paneSeparatorCornerRadius: CGFloat = 14
-
 struct SidebarHeader: View {
   var body: some View {
-    Color.clear.frame(height: titlebarContentHeight)
+    Color.clear.frame(height: EditorLayout.titlebarContentHeight)
   }
 }
 
@@ -315,7 +299,10 @@ struct EditorContainer: View {
     .background(Color(nsColor: .textBackgroundColor))
     .overlay(alignment: .leading) {
       EditorPaneSeparator()
-        .frame(width: lineNumberRulerWidth + paneSeparatorCornerRadius, height: nil)
+        .frame(
+          width: EditorLayout.lineNumberRulerWidth + EditorLayout.paneSeparatorCornerRadius,
+          height: nil
+        )
         .allowsHitTesting(false)
     }
   }
@@ -327,7 +314,7 @@ struct EditorPaneSeparator: View {
       ZStack(alignment: .topLeading) {
         Color(nsColor: .textBackgroundColor)
           .frame(width: 3, height: proxy.size.height)
-          .offset(x: lineNumberRulerWidth - 1)
+          .offset(x: EditorLayout.lineNumberRulerWidth - 1)
         RoundedPaneSeparator()
           .stroke(Color(nsColor: .separatorColor), lineWidth: 1)
       }
@@ -337,8 +324,8 @@ struct EditorPaneSeparator: View {
 
 struct RoundedPaneSeparator: Shape {
   func path(in rect: CGRect) -> Path {
-    let x = lineNumberRulerWidth - 0.5
-    let radius = paneSeparatorCornerRadius
+    let x = EditorLayout.lineNumberRulerWidth - 0.5
+    let radius = EditorLayout.paneSeparatorCornerRadius
     var path = Path()
     path.move(to: CGPoint(x: x + radius, y: rect.minY))
     path.addQuadCurve(
@@ -366,10 +353,10 @@ struct EditorTitlebar: View {
         .truncationMode(.middle)
       Spacer()
     }
-    .padding(.leading, lineNumberRulerWidth + 16)
+    .padding(.leading, EditorLayout.lineNumberRulerWidth + 16)
     .padding(.trailing, 16)
     .frame(maxWidth: .infinity, alignment: .leading)
-    .frame(height: titlebarContentHeight)
+    .frame(height: EditorLayout.titlebarContentHeight)
     .background(Color(nsColor: .textBackgroundColor))
   }
 }

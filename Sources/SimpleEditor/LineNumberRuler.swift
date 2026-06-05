@@ -8,7 +8,7 @@ final class LineNumberRuler: NSRulerView {
     self.textView = textView
     super.init(scrollView: textView.enclosingScrollView!, orientation: .verticalRuler)
     clientView = textView
-    ruleThickness = 46
+    ruleThickness = EditorLayout.lineNumberRulerWidth
   }
 
   required init(coder: NSCoder) {
