@@ -78,6 +78,14 @@ This repository is a minimal macOS note editor with a native feel.
   active window. Keep the standard macOS `List(selection:)` behavior instead of
   replacing it with custom row selection drawing unless this tradeoff is
   explicitly revisited.
+- 2026-06-06: Tried raising SwiftPM to Swift tools 6.3 / macOS 26 and migrating
+  `FileStore` from `ObservableObject` to Swift Observation. The package-only
+  change triggered Swift 6.3 AppKit actor-isolation warnings and a build error,
+  and the full migration required `@preconcurrency`, `@MainActor`,
+  `Task { @MainActor ... }`, `@Bindable`, and `@ObservationIgnored` plumbing.
+  The app did not become simpler, so keep the current target and observation
+  model unless there is a concrete macOS 26-only feature that justifies the
+  extra concurrency annotations.
 
 ## Completed Features
 - 2026-01-25: Prefer a CJK-capable monospaced font (e.g. Osaka-Mono) for equal-width glyphs.
