@@ -72,6 +72,12 @@ This repository is a minimal macOS note editor with a native feel.
 - When making changes, run `make build` and confirm the build passes.
 - Follow `make format` formatting rules and run it when needed.
 - When a feature is completed, record it in this AGENTS.md.
+- 2026-06-06: Tried softening the active blue sidebar selection by applying
+  `.environment(\.controlActiveState, .inactive)` and then `.tint(.gray)` to the
+  SwiftUI sidebar `List`. Neither changed the selected row from blue in the
+  active window. Keep the standard macOS `List(selection:)` behavior instead of
+  replacing it with custom row selection drawing unless this tradeoff is
+  explicitly revisited.
 
 ## Completed Features
 - 2026-01-25: Prefer a CJK-capable monospaced font (e.g. Osaka-Mono) for equal-width glyphs.
