@@ -163,14 +163,14 @@ final class FileStore: ObservableObject {
       try FileManager.default.createDirectory(at: baseURL, withIntermediateDirectories: true)
       let formatter = DateFormatter()
       formatter.locale = Locale(identifier: "en_US_POSIX")
-      formatter.dateFormat = "yyyyMMdd-HHmmss"
+      formatter.dateFormat = "yyyy-MM-dd-HH:mm:ss"
       let stamp = formatter.string(from: Date())
-      var name = "\(stamp).txt"
+      var name = stamp
       var candidate = baseURL.appendingPathComponent(name)
       var index = 0
       while FileManager.default.fileExists(atPath: candidate.path) {
         index += 1
-        name = "\(stamp)-\(index).txt"
+        name = "\(stamp)-\(index)"
         candidate = baseURL.appendingPathComponent(name)
       }
       FileManager.default.createFile(atPath: candidate.path, contents: nil)
@@ -277,7 +277,10 @@ final class FileStore: ObservableObject {
     let base = url.deletingPathExtension().lastPathComponent
     for i in 0..<100 {
       let suffix = i == 0 ? "" : "-\(i)"
-      let newName = "_\(base)\(suffix).\(ext)"
+      let newName =
+        ext.isEmpty
+        ? "_\(base)\(suffix)"
+        : "_\(base)\(suffix).\(ext)"
       let newURL = baseURL.appendingPathComponent(newName)
       if FileManager.default.fileExists(atPath: newURL.path) {
         continue
