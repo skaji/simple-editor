@@ -145,13 +145,17 @@ struct WindowChromeConfigurator: NSViewRepresentable {
         }
       }
       observerTokens.append(
-        center.addObserver(forName: NSApplication.didBecomeActiveNotification, object: nil, queue: .main) {
+        center.addObserver(
+          forName: NSApplication.didBecomeActiveNotification, object: nil, queue: .main
+        ) {
           [weak self] _ in
           self?.scheduleChromeApply()
         }
       )
       observerTokens.append(
-        center.addObserver(forName: NSApplication.didResignActiveNotification, object: nil, queue: .main) {
+        center.addObserver(
+          forName: NSApplication.didResignActiveNotification, object: nil, queue: .main
+        ) {
           [weak self] _ in
           self?.scheduleChromeApply()
         }
@@ -302,6 +306,7 @@ struct EditorContainer: View {
 
 struct EditorTitlebar: View {
   @EnvironmentObject private var store: FileStore
+  @State private var isWrapButtonHovered = false
 
   var body: some View {
     HStack(spacing: 8) {
@@ -311,9 +316,35 @@ struct EditorTitlebar: View {
         .lineLimit(1)
         .truncationMode(.middle)
       Spacer()
+      Button {
+        store.setWrapLines(!store.wrapLines)
+      } label: {
+        Image(systemName: "return")
+          .font(.system(size: 15, weight: .medium))
+          .foregroundColor(
+            store.wrapLines
+              ? Color(nsColor: .labelColor).opacity(0.62)
+              : Color(nsColor: .secondaryLabelColor).opacity(0.62)
+          )
+          .frame(width: 28, height: 28)
+          .background(
+            RoundedRectangle(cornerRadius: 6)
+              .fill(
+                store.wrapLines || isWrapButtonHovered
+                  ? Color(nsColor: .quaternaryLabelColor).opacity(0.7) : Color.clear
+              )
+          )
+      }
+      .buttonStyle(.plain)
+      .contentShape(Rectangle())
+      .help(store.wrapLines ? "Disable text wrap" : "Enable text wrap")
+      .accessibilityLabel(store.wrapLines ? "Disable text wrap" : "Enable text wrap")
+      .onHover { hovering in
+        isWrapButtonHovered = hovering
+      }
     }
     .padding(.leading, EditorLayout.lineNumberRulerWidth + 16)
-    .padding(.trailing, 16)
+    .padding(.trailing, 12)
     .frame(maxWidth: .infinity, alignment: .leading)
     .frame(height: EditorLayout.titlebarContentHeight)
     .background(Color(nsColor: .textBackgroundColor))
