@@ -105,3 +105,4 @@ This repository is a minimal macOS note editor with a native feel.
 - 2026-05-10: Replace the SE app icon with the New file square-and-pencil symbol.
 - 2026-06-06: Add a fixed title-bar icon button for toggling text wrap.
 - 2026-06-06: Change generated filenames to `YYYY-MM-DD-HH:MM:SS` without an extension.
+- 2026-06-08: Use SwiftUI hidden title-bar window style instead of repeatedly mutating NSWindow chrome during edits.
