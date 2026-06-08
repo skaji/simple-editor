@@ -13,6 +13,7 @@ struct SimpleEditorApp: App {
           store.loadFilesIfNeeded()
         }
     }
+    .windowStyle(.hiddenTitleBar)
     .commands {
       CommandGroup(after: .textEditing) {
         Button("Find") {
@@ -75,7 +76,7 @@ struct ContentView: View {
     }
     .background(Color(nsColor: .windowBackgroundColor))
     .ignoresSafeArea(.container, edges: .top)
-    .background(WindowChromeConfigurator(store: store))
+    .background(WindowTitleConfigurator(title: store.windowTitle))
     .onChange(of: store.searchQuery) {
       store.updateSearchMatchesIfNeeded()
     }
@@ -85,8 +86,12 @@ struct ContentView: View {
   }
 }
 
-struct WindowChromeConfigurator: NSViewRepresentable {
-  @ObservedObject var store: FileStore
+struct WindowTitleConfigurator: NSViewRepresentable, Equatable {
+  let title: String
+
+  static func == (lhs: WindowTitleConfigurator, rhs: WindowTitleConfigurator) -> Bool {
+    lhs.title == rhs.title
+  }
 
   func makeCoordinator() -> Coordinator {
     Coordinator()
@@ -108,80 +113,26 @@ struct WindowChromeConfigurator: NSViewRepresentable {
 
   private func configureWindow(for view: NSView, coordinator: Coordinator) {
     guard let window = view.window else { return }
-    coordinator.configure(window: window, title: store.windowTitle)
+    coordinator.configure(window: window, title: title)
   }
 
   final class Coordinator {
     private weak var window: NSWindow?
     private var title = ""
-    private var observerTokens: [NSObjectProtocol] = []
-
-    deinit {
-      observerTokens.forEach(NotificationCenter.default.removeObserver)
-    }
 
     func configure(window: NSWindow, title: String) {
+      let didChangeWindow = self.window !== window
+      let didChangeTitle = self.title != title
+      self.window = window
       self.title = title
-      if self.window !== window {
-        observerTokens.forEach(NotificationCenter.default.removeObserver)
-        observerTokens.removeAll()
-        self.window = window
-        observeChromeResetNotifications(for: window)
+      if didChangeWindow {
+        window.isMovableByWindowBackground = true
       }
-      applyChrome()
-    }
-
-    private func observeChromeResetNotifications(for window: NSWindow) {
-      let center = NotificationCenter.default
-      let windowNotifications: [Notification.Name] = [
-        NSWindow.didBecomeKeyNotification,
-        NSWindow.didResignKeyNotification,
-        NSWindow.didBecomeMainNotification,
-        NSWindow.didResignMainNotification,
-      ]
-      observerTokens = windowNotifications.map { name in
-        center.addObserver(forName: name, object: window, queue: .main) { [weak self] _ in
-          self?.scheduleChromeApply()
-        }
+      if didChangeWindow || didChangeTitle {
+        window.title = title
       }
-      observerTokens.append(
-        center.addObserver(
-          forName: NSApplication.didBecomeActiveNotification, object: nil, queue: .main
-        ) {
-          [weak self] _ in
-          self?.scheduleChromeApply()
-        }
-      )
-      observerTokens.append(
-        center.addObserver(
-          forName: NSApplication.didResignActiveNotification, object: nil, queue: .main
-        ) {
-          [weak self] _ in
-          self?.scheduleChromeApply()
-        }
-      )
-    }
-
-    private func scheduleChromeApply() {
-      DispatchQueue.main.async { [weak self] in
-        self?.applyChrome()
-      }
-    }
-
-    private func applyChrome() {
-      guard let window else { return }
-      applyWindowChrome(to: window, title: title)
     }
   }
-}
-
-private func applyWindowChrome(to window: NSWindow, title: String) {
-  window.title = title
-  window.titleVisibility = .hidden
-  window.titlebarAppearsTransparent = true
-  window.titlebarSeparatorStyle = .none
-  window.styleMask.insert(.fullSizeContentView)
-  window.isMovableByWindowBackground = true
 }
 
 struct SidebarView: View {
@@ -310,11 +261,8 @@ struct EditorTitlebar: View {
 
   var body: some View {
     HStack(spacing: 8) {
-      Text(store.currentFileID ?? "SimpleEditor")
-        .font(.system(size: 14, weight: .semibold))
-        .foregroundColor(Color(nsColor: NSColor.secondaryLabelColor.withAlphaComponent(0.28)))
-        .lineLimit(1)
-        .truncationMode(.middle)
+      TitlebarFilenameText(title: store.currentFileID ?? "SimpleEditor")
+        .equatable()
       Spacer()
       Button {
         store.setWrapLines(!store.wrapLines)
@@ -348,6 +296,18 @@ struct EditorTitlebar: View {
     .frame(maxWidth: .infinity, alignment: .leading)
     .frame(height: EditorLayout.titlebarContentHeight)
     .background(Color(nsColor: .textBackgroundColor))
+  }
+}
+
+struct TitlebarFilenameText: View, Equatable {
+  let title: String
+
+  var body: some View {
+    Text(title)
+      .font(.system(size: 14, weight: .semibold))
+      .foregroundColor(Color(nsColor: NSColor.secondaryLabelColor.withAlphaComponent(0.28)))
+      .lineLimit(1)
+      .truncationMode(.middle)
   }
 }
 

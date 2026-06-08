@@ -403,8 +403,7 @@ final class FileStore: ObservableObject {
   }
 
   var windowTitle: String {
-    let name = currentFileID ?? "SimpleEditor"
-    return "\(name) — \(lineCount) lines"
+    currentFileID ?? "SimpleEditor"
   }
 
   private func loadConfig() {
